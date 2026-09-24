@@ -5,7 +5,7 @@ const cors = require("cors");
 const { GoogleGenAI } = require("@google/genai");
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 // Gemini AI
 const ai = new GoogleGenAI({
