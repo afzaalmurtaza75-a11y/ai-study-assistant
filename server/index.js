@@ -41,7 +41,7 @@ app.post("/ask", async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: question,
     });
 
@@ -74,7 +74,7 @@ app.post("/notes", async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: `
 Create simple study notes about:
 
@@ -117,7 +117,7 @@ app.post("/quiz", async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
 
       contents: `
 Create a quiz about:
@@ -267,7 +267,7 @@ Rules:
 
 
     const aiResponse = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
 
