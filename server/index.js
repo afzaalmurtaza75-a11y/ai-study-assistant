@@ -7,15 +7,20 @@ const { GoogleGenAI } = require("@google/genai");
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Gemini AI
+// ==========================
+// GEMINI AI
+// ==========================
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-// Middleware
+// ==========================
+// MIDDLEWARE
+// ==========================
+
 app.use(cors());
 app.use(express.json());
-
 
 // ==========================
 // HOME
@@ -25,6 +30,30 @@ app.get("/", (req, res) => {
   res.send("AI Study Assistant Server is Live 🚀");
 });
 
+// ==========================
+// TEST AI
+// ==========================
+
+app.get("/test-ai", async (req, res) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: "Say hello in one short sentence.",
+    });
+
+    res.json({
+      success: true,
+      answer: response.text,
+    });
+  } catch (error) {
+    console.log("TEST AI ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 // ==========================
 // ASK AI
@@ -41,23 +70,22 @@ app.post("/ask", async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: question,
     });
 
     res.json({
       answer: response.text,
     });
-
   } catch (error) {
-    console.log("Gemini error:", error);
+    console.log("Gemini ASK error:", error);
 
     res.status(500).json({
       error: "Could not get AI answer.",
+      details: error.message,
     });
   }
 });
-
 
 // ==========================
 // GENERATE NOTES
@@ -74,7 +102,7 @@ app.post("/notes", async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: `
 Create simple study notes about:
 
@@ -91,16 +119,15 @@ Use:
     res.json({
       notes: response.text,
     });
-
   } catch (error) {
-    console.log("Gemini error:", error);
+    console.log("Gemini NOTES error:", error);
 
     res.status(500).json({
       error: "Could not generate notes.",
+      details: error.message,
     });
   }
 });
-
 
 // ==========================
 // GENERATE QUIZ
@@ -117,8 +144,7 @@ app.post("/quiz", async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-
+      model: "gemini-3.6-flash",
       contents: `
 Create a quiz about:
 
@@ -156,7 +182,6 @@ Rules:
 
     const quizText = response.text;
 
-    // Remove possible markdown code blocks
     const cleanQuiz = quizText
       .replace(/```json/g, "")
       .replace(/```/g, "")
@@ -167,16 +192,15 @@ Rules:
     res.json({
       quiz: quiz,
     });
-
   } catch (error) {
-    console.log("Gemini quiz error:", error);
+    console.log("Gemini QUIZ error:", error);
 
     res.status(500).json({
       error: "Could not generate quiz.",
+      details: error.message,
     });
   }
 });
-
 
 // ==========================
 // SEARCH WEB + GEMINI
@@ -192,8 +216,10 @@ app.post("/search", async (req, res) => {
   }
 
   try {
+    // ==========================
+    // SEARCH WITH TAVILY
+    // ==========================
 
-    // Search internet with Tavily
     const searchResponse = await fetch(
       "https://api.tavily.com/search",
       {
@@ -222,8 +248,10 @@ app.post("/search", async (req, res) => {
       });
     }
 
+    // ==========================
+    // PREPARE SEARCH RESULTS
+    // ==========================
 
-    // Prepare web results
     const webResults = searchData.results
       .map(
         (item, index) => `
@@ -241,8 +269,10 @@ ${item.content}
       )
       .join("\n");
 
+    // ==========================
+    // SEND RESULTS TO GEMINI
+    // ==========================
 
-    // Send results to Gemini
     const prompt = `
 You are an AI Study Assistant.
 
@@ -265,42 +295,52 @@ Rules:
 - If the results do not contain enough information, say so.
 `;
 
-
     const aiResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: prompt,
     });
 
+    // ==========================
+    // CREATE SOURCES
+    // ==========================
 
-    // Create sources
     const sources = searchData.results.map((item) => ({
       title: item.title,
       url: item.url,
     }));
 
+    // ==========================
+    // SEND RESPONSE
+    // ==========================
 
     res.json({
       answer: aiResponse.text,
       sources: sources,
     });
-
   } catch (error) {
-
     console.log("Search + Gemini error:", error);
 
     res.status(500).json({
       error: "Could not generate AI answer.",
+      details: error.message,
     });
   }
 });
 
+// ==========================
+// 404 ROUTE
+// ==========================
+
+app.use((req, res) => {
+  res.status(404).json({
+    error: "404 - Route not found.",
+  });
+});
 
 // ==========================
 // START SERVER
 // ==========================
 
 app.listen(port, () => {
-  console.log(
-    `Server is running on http://localhost:${port}`
-  );
+  console.log(`Server is running on http://localhost:${port}`);
 });
