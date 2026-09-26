@@ -341,6 +341,10 @@ app.use((req, res) => {
 // START SERVER
 // ==========================
 
+// ==========================
+// START SERVER
+// ==========================
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
